@@ -1,0 +1,22 @@
+{
+  "name": "eth-price-oracle",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "deploy:oracle": "cd oracle && npx truffle migrate --network extdev --reset -all && cd ..",
+    "deploy:caller": "cd caller && npx truffle migrate --network extdev --reset -all && cd ..",
+    "deploy:all": "npm run deploy:oracle && npm run deploy:caller"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.2.0",
+    "bn.js": "^5.2.1",
+    "loom-js": "^1.79.0",
+    "loom-truffle-provider": "^0.15.0",
+    "openzeppelin-solidity": "^4.6.0",
+    "truffle": "^5.6.7"
+  }
+}
