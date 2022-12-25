@@ -16,11 +16,14 @@ contract EthPriceOracle {
     Roles.Role private owners;
     Roles.Role private oracles;
 
+    using SafeMath for uint256;
+
     CallerContractInterface private callerContractInstance;
 
     uint private randNonce = 0;
     uint private modulus = 1000;
     uint private numOracles = 0;
+    uint private THRESHOLD = 0;
     mapping(uint256 => bool) pendingRequests;
     mapping (uint256 => Response[]) public requestIdToResponse;
 
@@ -28,7 +31,7 @@ contract EthPriceOracle {
     event SetLatestEthPriceEvent(uint256 ethPrice, address callerAddress);
     event AddOracleEvent(address oracleAddress);
     event RemoveOracleEvent(address oracleAddress);
-    
+
     constructor(address _owner) public {
         owners.add(_owner);
     }
@@ -70,13 +73,24 @@ contract EthPriceOracle {
 
         Response memory resp;
         resp = Response(msg.sender, _callerAddress, _ethPrice);
-        
         requestIdToResponse[_id].push(resp);
-        delete pendingRequests[_requestId];
 
-        callerContractInstance = CallerContractInterface(_callerAddress);
-        callerContractInstance.callback(_ethPrice, _requestId);
+        uint numResponses = requestIdToResponse[_id].length;
 
-        emit SetLatestEthPriceEvent(_ethPrice, _callerAddress);
+        if (numResponses == THRESHOLD) {
+            uint computedEthPrice = 0;
+            for (uint f = 0; f < requestIdToResponse[_id].length; f++) {
+                computedEthPrice = computedEthPrice.add(requestIdToResponse[_id][f].ethPrice);
+            }
+            computedEthPrice = computedEthPrice.div(numResponses);
+
+            delete pendingRequests[_requestId];
+            delete requestIdToResponse[_id];
+
+            CallerContractInterface callerContractInstance;
+            callerContractInstance = CallerContractInterface(_callerAddress);
+            callerContractInstance.callback(computedEthPrice, _id);
+            emit SetLatestEthPriceEvent(computedEthPrice, _callerAddress);
+        }
     }
 }
